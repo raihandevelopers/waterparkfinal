@@ -38,13 +38,20 @@ const EditWaterpark = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const addItem = (field) => {
-    setFormData({
-      ...formData,
-      [field]: [...formData[field], ""],
-    });
+    if (field === "faqs") {
+      setFormData({
+        ...formData,
+        faqs: [...formData.faqs, { question: "", answer: "" }],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], ""],
+      });
+    }
   };
+
 
   const removeItem = (field, index) => {
     const updatedArray = formData[field].filter((_, i) => i !== index);
@@ -60,10 +67,14 @@ const EditWaterpark = () => {
 
   const handleFaqChange = (e, index, field) => {
     const { value } = e.target;
-    const updatedFaqs = [...formData.faqs];
-    updatedFaqs[index][field] = value;
-    setFormData({ ...formData, faqs: updatedFaqs });
+    const updatedFaqs = [...formData.faqs]; // Clone the current FAQs array
+    updatedFaqs[index] = {
+      ...updatedFaqs[index], // Ensure the object structure is preserved
+      [field]: value,       // Update the specific field
+    };
+    setFormData({ ...formData, faqs: updatedFaqs }); // Update the state
   };
+
 
   // Handle image file change
   const handleImageChange = (e) => {
@@ -86,11 +97,13 @@ const EditWaterpark = () => {
   };
 
   const handleSubmit = (e) => {
+    console.log("Form data:", formData.faqs);
     e.preventDefault();
     axios
       .put(`${import.meta.env.VITE_SERVER_URL}/api/waterparks/${id}`, formData)
       .then((response) => {
         if (response.status === 200) {
+          console.log("Waterpark updated successfully");
           toast.success("Waterpark updated successfully");
           navigate("/admin/edit-waterpark");
         }
@@ -99,6 +112,18 @@ const EditWaterpark = () => {
         toast.error("Error updating waterpark");
         console.error("Error updating waterpark:", error);
       });
+  };
+  const addFaq = () => {
+    const newFaq = { question: "", answer: "" }; // Default structure for a new FAQ
+    setFormData({
+      ...formData,
+      faqs: [...formData.faqs, newFaq], // Append the new FAQ object
+    });
+  };
+
+  const removeFaq = (index) => {
+    const updatedFaqs = formData.faqs.filter((_, i) => i !== index); // Exclude the item at `index`
+    setFormData({ ...formData, faqs: updatedFaqs }); // Update the state
   };
 
 
@@ -175,12 +200,12 @@ const EditWaterpark = () => {
         <div>
           <label className="block font-semibold">Discount Percentage</label>
           <input
-  type="number"
-  name="discountPercentage"
-  value={formData.discountPercentage}
-  onChange={handleChange}
-  className="border w-full p-2 rounded"
-/>
+            type="number"
+            name="discountPercentage"
+            value={formData.discountPercentage}
+            onChange={handleChange}
+            className="border w-full p-2 rounded"
+          />
 
         </div>
 
@@ -220,8 +245,8 @@ const EditWaterpark = () => {
           />
         </div>
 
-               {/* Images URL */}
-               <div>
+        {/* Images URL */}
+        <div>
           <label className="block font-semibold">Images</label>
           <div className="flex flex-wrap gap-4">
             {/* Display existing images */}
@@ -256,110 +281,119 @@ const EditWaterpark = () => {
         </div>
 
 
-{/* Included */}
-<div>
-  <label className="block font-semibold">Included</label>
-  {formData.included.map((item, index) => (
-    <div key={index} className="flex items-center space-x-2 mb-2">
-      <input
-        type="text"
-        name="included"
-        value={item}
-        onChange={(e) => handleArrayChange(e, "included", index)}
-        className="border w-full p-2 rounded"
-        placeholder="Enter included item"
-      />
-      <button
-        type="button"
-        onClick={() => removeItem("included", index)}
-        className="bg-red-500 text-white p-2 rounded"
-      >
-        Remove
-      </button>
-    </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => addItem("included")}
-    className="bg-blue-500 text-white p-2 rounded mt-2"
-  >
-    Add Item
-  </button>
-</div>
+        {/* Included */}
+        <div>
+          <label className="block font-semibold">Included</label>
+          {formData.included.map((item, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <input
+                type="text"
+                name="included"
+                value={item}
+                onChange={(e) => handleArrayChange(e, "included", index)}
+                className="border w-full p-2 rounded"
+                placeholder="Enter included item"
+              />
+              <button
+                type="button"
+                onClick={() => removeItem("included", index)}
+                className="bg-red-500 text-white p-2 rounded"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addItem("included")}
+            className="bg-blue-500 text-white p-2 rounded mt-2"
+          >
+            Add Item
+          </button>
+        </div>
 
-{/* Excluded */}
-<div>
-  <label className="block font-semibold">Excluded</label>
-  {formData.excluded.map((item, index) => (
-    <div key={index} className="flex items-center space-x-2 mb-2">
-      <input
-        type="text"
-        name="excluded"
-        value={item}
-        onChange={(e) => handleArrayChange(e, "excluded", index)}
-        className="border w-full p-2 rounded"
-        placeholder="Enter excluded item"
-      />
-      <button
-        type="button"
-        onClick={() => removeItem("excluded", index)}
-        className="bg-red-500 text-white p-2 rounded"
-      >
-        Remove
-      </button>
-    </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => addItem("excluded")}
-    className="bg-blue-500 text-white p-2 rounded mt-2"
-  >
-    Add Item
-  </button>
-</div>
+        {/* Excluded */}
+        <div>
+          <label className="block font-semibold">Excluded</label>
+          {formData.excluded.map((item, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <input
+                type="text"
+                name="excluded"
+                value={item}
+                onChange={(e) => handleArrayChange(e, "excluded", index)}
+                className="border w-full p-2 rounded"
+                placeholder="Enter excluded item"
+              />
+              <button
+                type="button"
+                onClick={() => removeItem("excluded", index)}
+                className="bg-red-500 text-white p-2 rounded"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addItem("excluded")}
+            className="bg-blue-500 text-white p-2 rounded mt-2"
+          >
+            Add Item
+          </button>
+        </div>
 
-{/* FAQ */}
-<div>
-  <label className="block font-semibold">FAQs</label>
-  {formData.faqs.map((item, index) => (
-    <div key={index} className="space-y-2 mb-4">
-      <div className="flex items-center space-x-2">
-        <input
-          type="text"
-          name="question"
-          value={item.question}
-          onChange={(e) => handleFaqChange(e, index, "question")}
-          className="border w-full p-2 rounded"
-          placeholder="Enter question"
-        />
-      </div>
-      <div className="flex items-center space-x-2">
-        <input
-          type="text"
-          name="answer"
-          value={item.answer}
-          onChange={(e) => handleFaqChange(e, index, "answer")}
-          className="border w-full p-2 rounded"
-          placeholder="Enter answer"
-        />
-      </div>
-      <button
-        type="button"
-        onClick={() => removeItem("faqs", index)}
-        className="bg-red-500 text-white p-2 rounded mt-2"
-      >
-        Remove FAQ
-      </button>
-    </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => addItem("faqs")}
-    className="bg-blue-500 text-white p-2 rounded mt-2"
-  >
-    Add FAQ
-  </button>
-</div>
+        {/* FAQ */}
+        <div>
+          <label className="block font-semibold">FAQs</label>
+          {formData.faqs.map((item, index) => (
+            <div key={index} className="space-y-2 mb-4">
+              {/* Question Input */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  name={`question-${index}`}
+                  value={item.question || ""} // Ensure it's always a string
+                  onChange={(e) => handleFaqChange(e, index, "question")}
+                  className="border w-full p-2 rounded"
+                  placeholder="Enter question"
+                />
+              </div>
+
+              {/* Answer Input */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  name={`answer-${index}`}
+                  value={item.answer || ""} // Ensure it's always a string
+                  onChange={(e) => handleFaqChange(e, index, "answer")}
+                  className="border w-full p-2 rounded"
+                  placeholder="Enter answer"
+                />
+              </div>
+
+              {/* Remove Button */}
+              <button
+                type="button"
+                onClick={() => removeFaq(index)}
+                className="bg-red-500 text-white p-2 rounded mt-2"
+              >
+                Remove FAQ
+              </button>
+            </div>
+          ))}
+
+          {/* Add FAQ Button */}
+          <button
+            type="button"
+            onClick={addFaq}
+            className="bg-blue-500 text-white p-2 rounded mt-2"
+          >
+            Add FAQ
+          </button>
+        </div>
+
+
 
 
         {/* Submit Button */}
