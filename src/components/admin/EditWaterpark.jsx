@@ -25,9 +25,10 @@ const EditWaterpark = () => {
 
   useEffect(() => {
     axios
-      .get(`https://api.waterparkchalo.com/api/waterparks/${id}`)
+      .get(`${import.meta.env.VITE_SERVER_URL}/api/waterparks/${id}`)
       .then((response) => {
         setFormData(response.data);
+        console.log(response.data)
       })
       .catch((error) => {
         console.error("Error fetching waterpark:", error);
@@ -77,24 +78,74 @@ const EditWaterpark = () => {
 
 
   // Handle image file change
-  const handleImageChange = (e) => {
-    const files = e.target.files;
-    const updatedImages = [...formData.images];
+const handleImageChange = async (e) => {
+  const files = e.target.files;
+  const updatedImages = [...formData.images];
 
-    // Convert the files to URLs and update the state
-    Array.from(files).forEach((file) => {
-      const fileURL = URL.createObjectURL(file);
-      updatedImages.push(fileURL);
-    });
+  // Loop through the files and upload each one
+  Array.from(files).forEach(async (file) => {
+    const fileURL = URL.createObjectURL(file); // Preview the image locally
+    updatedImages.push(fileURL);
 
-    setFormData({ ...formData, images: updatedImages });
-  };
+    // Prepare the form data for uploading
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      // Send a request to the backend to upload the image
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/waterparks/${id}/add-image`, {
+        method: 'POST',
+        body: formData,
+      });
+      console.log(response)
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('Image uploaded successfully');
+        console.log('Image uploaded successfully:', result);
+      } else {
+        toast.error('Failed to upload image');
+        console.error('Failed to upload image:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  });
+
+  // Update the local state
+  setFormData({ ...formData, images: updatedImages });
+};
 
   // Remove image from the list
-  const removeImage = (index) => {
-    const updatedImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: updatedImages });
+  const removeImage = async (index) => {
+    const imageToRemove = formData.images[index];
+    console.log(imageToRemove);
+  
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_URL}/api/waterparks/${id}/delete-image`, // Replace with your actual delete image endpoint
+        { imageUrl: imageToRemove },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+  
+      // Check if the status code is 200
+      if (response.status === 200) {
+        // Update the state after successful deletion
+        const updatedImages = formData.images.filter((_, i) => i !== index);
+        setFormData({ ...formData, images: updatedImages });
+        toast.success('Image removed successfully');
+      } else {
+        toast.error('Failed to remove image');
+      }
+    } catch (error) {
+      toast.error('Failed to remove image');
+      console.error("Error removing image:", error);
+    }
   };
+    
 
   const handleSubmit = (e) => {
     console.log("Form data:", formData.faqs);
